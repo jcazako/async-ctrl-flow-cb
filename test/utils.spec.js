@@ -1,35 +1,35 @@
 import { urlToFilename, save } from '../lib/utils.js'
-import { describe, it, before, after } from 'mocha'
+import { describe, it, after } from 'mocha'
 import { expect } from 'chai'
+import fs from 'fs'
 
-const { log, error } = console
+const { error } = console
 
 describe('Functional test',() => {
+  const url = 'https://loige.co'
+  const filename = urlToFilename(url)
+  const sampleTest = 'CONTENT_TEST'
+  
   it('urlFileName function should return a correct filename', () => {
-    const url = 'https://loige.co'
-    const filename = urlToFilename(url)
     expect(filename).to.be.equal('loige.co.html')
   })
 
   describe('File saving test', () => {
-    before(() => {
-      // const url = 'https://loige.co'
-      // const filename = urlToFilename(url)
-      // save(filename, 'CONTENT TEST', (err, filename, downloaded) => {
-      //   if (err) return error(err)
-      //   if (downloaded) return log(`saved "${filename}"`)
-
-      // })
-      log('BEFORE')
+    it('Should save the file correctly', (done) => {
+      save(filename, sampleTest, (err) => {
+        expect(err).to.be.null
+        fs.readFile(filename, (err, content) => {
+          if (err) done(err)
+          expect(content.toString()).to.be.equal(sampleTest)
+        })
+        done()
+      })
     })
 
     after(() => {
-      log('AFTER')
+      fs.unlink(filename, err => {
+        if (err) return error(err)
+      })
     })
-    it('Should save function should save file correctly')
-  })
-
-  describe('Download content test', () => {
-    it('Should download content from url and save the file correctly')
   })
 })
