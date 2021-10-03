@@ -1,18 +1,22 @@
+import { describe, it, afterEach } from 'mocha'
+import { expect } from 'chai'
+import fs from 'fs'
+import nock from 'nock'
+
+// Utils to be tested
+
 import { urlToFilename, 
   save,
   download, 
   getLinkUrl,
   getPageLinks } from '../lib/utils.js'
-import { describe, it, afterEach } from 'mocha'
-import { expect } from 'chai'
-import fs from 'fs'
 
 const { error, log } = console
 
 describe('Functional test',() => {
   const url = 'https://loige.co'
   const filename = urlToFilename(url)
-  const sampleTest = 'CONTENT_TEST'
+  const testFile = 'test/loige.co.for.test.html'
   
   it('urlFileName function should return a correct filename', () => {
     expect(filename).to.be.equal('loige.co.html')
@@ -20,6 +24,7 @@ describe('Functional test',() => {
 
   describe('File saving test', () => {
     it('Should save the file correctly', (done) => {
+      const sampleTest = 'CONTENT_TEST'
       save(filename, sampleTest, (err) => {
         expect(err).to.be.null
         fs.readFile(filename, (err, content) => {
@@ -31,10 +36,17 @@ describe('Functional test',() => {
     })
 
     it('Should download content properly from url', (done) => {
-      download(url, filename, (err, data) => {
+      fs.readFile(testFile, (err, data) => {
         if (err) done(err)
-        expect(data).to.not.be.undefined
-        done()
+        nock(url)
+          .get('/')
+          .reply(200, data)
+        download(url, filename, (err, content) => {
+          if (err) done(err)
+          expect(content).to.not.be.undefined
+          expect(content).to.be.equal(data.toString())
+          done()
+        })
       })
     })
 
@@ -53,7 +65,7 @@ describe('Functional test',() => {
     })
   
     it('Should parse body links', (done) => {
-      fs.readFile('./test/loige.co.for.test.html', (err, data) => {
+      fs.readFile(testFile, (err, data) => {
         if (err) done(err)
         const pageLinks = getPageLinks(url, data)
         expect(pageLinks).to.not.be.undefined
